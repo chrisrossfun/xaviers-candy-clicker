@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xavier's Candy Clicker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: playful sweet-shop arcade, bright and bouncy
+   IDEA: a candy-shop counter: one giant wrapped sweet on a cherry field, jars of upgrades beside it
+   PICTURE: a big striped wrapped candy that squashes on tap and sprays numbers
+   COLOUR and TYPE: cherry pink field, mint support, lemon accent; Baloo 2 rounded lettering
+   LAYOUT: candy stage left (top on phones), reward timers, skills and shop panels right */
+:root{color-scheme:light dark;
+--bg:light-dark(#fff1f6,#1c0817);--panel:light-dark(#ffffff,#2c0f25);--ink:light-dark(#3a0d2a,#ffe9f2);
+--soft:light-dark(#8a4a6c,#d9a7c0);--cherry:#ff4f8b;--cherry2:#e2306f;--mint:#2fc79c;--lemon:#ffd23f;
+--line:light-dark(#f6cfe0,#4a1a3e);--track:light-dark(#fbe0eb,#3d1433)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Baloo 2",system-ui,sans-serif;overflow-x:clip}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--lemon);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding:16px max(3vw,12px) 40px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px}
+@media(max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}}
+/* stage */
+.stage{position:relative;background:radial-gradient(circle at 50% 42%,#ff86b0 0,var(--cherry) 45%,var(--cherry2) 100%);border-radius:28px;color:#fff;padding:20px 20px 22px;overflow:hidden;display:flex;flex-direction:column;align-items:center;min-height:520px;box-shadow:0 10px 0 #b81f57}
+@media(min-width:861px){.stage{position:sticky;top:16px;align-self:start}}
+.stage::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.08) 0 18px,transparent 18px 36px);pointer-events:none}
+h1{margin:0;font-size:clamp(32px,5vw,46px);line-height:1.05;font-weight:800;letter-spacing:-.5px;position:relative}
+.count{position:relative;text-align:center;margin-top:4px}
+.count b{display:block;font-size:clamp(34px,6vw,52px);line-height:1.05;font-weight:800;white-space:nowrap}
+.count span{font-size:16px;opacity:.92}
+.candyBtn{position:relative;background:none;border:0;padding:0;margin:8px 0 4px;width:min(330px,82vw);aspect-ratio:1.45;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.candyBtn svg{width:100%;height:100%;filter:drop-shadow(0 12px 0 rgba(120,10,50,.35));transition:transform .08s}
+.candyBtn.pop svg{transform:scale(.9) rotate(-4deg)}
+.candyBtn.boost svg{filter:drop-shadow(0 0 22px var(--lemon)) drop-shadow(0 12px 0 rgba(120,10,50,.35))}
+@media(prefers-reduced-motion:no-preference){.candyBtn svg{animation:bob 3s ease-in-out infinite}}
+@keyframes bob{50%{translate:0 -6px}}
+.float{position:absolute;pointer-events:none;font-weight:800;font-size:22px;color:#fff;text-shadow:0 2px 0 #b81f57;animation:up .9s ease-out forwards;white-space:nowrap;z-index:3}
+.float.crit{color:var(--lemon);font-size:30px}
+@keyframes up{to{transform:translateY(-80px);opacity:0}}
+.lvl{position:relative;width:100%;max-width:420px;margin-top:auto}
+.lvlTop{display:flex;justify-content:space-between;gap:8px;font-weight:700}
+.bar{height:16px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--lemon);border-radius:99px;transition:width .15s}
+.chips{position:relative;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+.chip{background:rgba(255,255,255,.18);border-radius:99px;padding:4px 12px;font-size:15px;white-space:nowrap}
+.chip.hot{background:var(--lemon);color:#5a2a00;font-weight:700}
+.tog{min-height:44px;border:2px solid rgba(255,255,255,.55);background:rgba(255,255,255,.12);color:#fff;border-radius:99px;padding:4px 16px;font-weight:700}
+.tog[aria-pressed=false]{opacity:.7;text-decoration:line-through}
+/* panels */
+.side{display:grid;gap:18px;align-content:start}
+.panel{background:var(--panel);border:2px solid var(--line);border-radius:22px;padding:16px}
+.panel h2{margin:0 0 10px;font-size:24px;line-height:1.1;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.panel h2 small{font-size:15px;color:var(--soft);font-weight:500}
+.row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:2px dashed var(--line)}
+.row:first-of-type{border-top:0}
+.ico{width:44px;height:44px}
+.name{font-weight:700;line-height:1.2}
+.desc{font-size:14px;color:var(--soft);line-height:1.3}
+.tbar{height:10px;border-radius:99px;background:var(--track);overflow:hidden;margin-top:5px}
+.tbar i{display:block;height:100%;background:var(--mint);border-radius:99px}
+.btn{min-height:44px;min-width:92px;border:0;border-radius:14px;padding:6px 14px;background:var(--mint);color:#063d2e;font-weight:800;white-space:nowrap;box-shadow:0 4px 0 #1b8e6d;transition:transform .05s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #1b8e6d}
+.btn:disabled{background:var(--track);color:var(--soft);box-shadow:none;cursor:not-allowed}
+.btn.gold{background:var(--lemon);color:#5a2a00;box-shadow:0 4px 0 #c99a00}
+.btn.gold:disabled{background:var(--track);color:var(--soft);box-shadow:none}
+.owned{font-size:14px;color:var(--soft)}
+.pips{display:flex;gap:3px;margin-top:4px}.pips i{width:10px;height:10px;border-radius:3px;background:var(--track)}.pips i.on{background:var(--cherry)}
+.foot{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;font-size:14px;color:var(--soft)}
+.ghost{background:none;border:2px solid var(--line);border-radius:12px;min-height:44px;padding:4px 14px;color:var(--soft)}
+/* toast + modal */
+#toasts{position:fixed;left:50%;bottom:18px;translate:-50% 0;display:grid;gap:8px;z-index:20;width:min(92vw,380px)}
+.toast{background:var(--ink);color:var(--bg);border-radius:16px;padding:10px 16px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.25);animation:tin .25s ease-out}
+@keyframes tin{from{transform:translateY(20px);opacity:0}}
+.modal{position:fixed;inset:0;background:rgba(30,0,20,.55);display:none;place-items:center;z-index:30;padding:16px}
+.modal.open{display:grid}
+.modal .panel{max-width:360px;text-align:center}
+.modal .acts{display:flex;gap:10px;justify-content:center;margin-top:12px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="stage" aria-label="Candy counter">
+    <h1>Xavier's Candy Clicker</h1>
+    <div class="count"><b id="candy">0</b><span><span id="cps">0</span> per second · <span id="cpc">1</span> per tap</span></div>
+    <button class="candyBtn" id="candyBtn" aria-label="Tap the candy">
+      <svg viewBox="0 0 290 200" aria-hidden="true">
+        <defs>
+          <radialGradient id="body" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fff7d6"/><stop offset=".55" stop-color="#ffd23f"/><stop offset="1" stop-color="#f0a500"/></radialGradient>
+          <linearGradient id="wrapL" x1="0" x2="1"><stop offset="0" stop-color="#2fc79c"/><stop offset="1" stop-color="#7ff0cf"/></linearGradient>
+          <linearGradient id="wrapR" x1="1" x2="0"><stop offset="0" stop-color="#2fc79c"/><stop offset="1" stop-color="#7ff0cf"/></linearGradient>
+          <clipPath id="ball"><circle cx="145" cy="100" r="64"/></clipPath>
+        </defs>
+        <path d="M86 100 L14 44 Q4 100 14 156 Z" fill="url(#wrapL)" stroke="#16906d" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M30 60 L40 140 M50 72 L56 128" stroke="#16906d" stroke-width="3" opacity=".5"/>
+        <path d="M204 100 L276 44 Q286 100 276 156 Z" fill="url(#wrapR)" stroke="#16906d" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M260 60 L250 140 M240 72 L234 128" stroke="#16906d" stroke-width="3" opacity=".5"/>
+        <circle cx="145" cy="100" r="64" fill="url(#body)" stroke="#c98200" stroke-width="4"/>
+        <g clip-path="url(#ball)" fill="#ff4f8b" opacity=".9">
+          <path d="M60 40 L110 20 L230 160 L180 180 Z"/><path d="M10 90 L40 70 L160 210 L110 230 Z"/><path d="M130 -10 L170 -20 L290 120 L250 140 Z"/>
+        </g>
+        <ellipse cx="122" cy="70" rx="20" ry="11" fill="#fff" opacity=".7" transform="rotate(-25 122 70)"/>
+      </svg>
+    </button>
+    <div class="lvl">
+      <div class="lvlTop"><span>Level <span id="lvl">1</span></span><span><span id="xp">0</span> / <span id="xpNeed">20</span> taps</span></div>
+      <div class="bar" role="progressbar" aria-label="Level progress"><i id="xpBar" style="width:0%"></i></div>
+    </div>
+    <div class="chips"><span class="chip" id="clicksChip">0 taps</span><span class="chip" id="spChip">0 skill points</span><span class="chip hot" id="boostChip" hidden>Sugar rush x2</span></div>
+    <div class="chips"><button class="tog" id="musicBtn" aria-pressed="true">Music on</button><button class="tog" id="sfxBtn" aria-pressed="true">Sounds on</button></div>
+  </section>
+
+  <div class="side">
+    <section class="panel" aria-labelledby="rwTitle">
+      <h2 id="rwTitle">Minute rewards <small>Round <span id="round">1</span> · played <span id="playT">0:00</span></small></h2>
+      <div id="rewards"></div>
+    </section>
+    <section class="panel" aria-labelledby="skTitle">
+      <h2 id="skTitle">Skills <small>1 point per level up</small></h2>
+      <div id="skills"></div>
+    </section>
+    <section class="panel" aria-labelledby="shTitle">
+      <h2 id="shTitle">Candy shop <small>Helpers make candy for you</small></h2>
+      <div id="shop"></div>
+    </section>
+    <div class="foot"><span>Progress saves automatically in this browser.</span><button class="ghost" id="resetBtn">Start over</button></div>
+  </div>
+</div>
+<div id="toasts" aria-live="polite"></div>
+<div class="modal" id="modal"><div class="panel"><h2 style="justify-content:center">Start over?</h2><div>All candy, levels and helpers will be wiped.</div><div class="acts"><button class="ghost" id="noReset">Keep playing</button><button class="btn" id="yesReset">Reset</button></div></div></div>
+
+<script>
+{
+const SHOP=[
+ {id:'gummy',name:'Gummy helper',desc:'A tiny bear that taps for you',cost:15,rate:0.3,col:'#ff7aa8'},
+ {id:'lolly',name:'Lollipop stand',desc:'Swirls out sweets all day',cost:100,rate:2,col:'#ffd23f'},
+ {id:'fudge',name:'Fudge kitchen',desc:'Slow-cooked, fast profits',cost:1100,rate:10,col:'#c9834a'},
+ {id:'choc',name:'Chocolate factory',desc:'Rivers of chocolate',cost:12000,rate:50,col:'#7a4126'},
+ {id:'mine',name:'Rock candy mine',desc:'Crystals dug from the deep',cost:130000,rate:260,col:'#8fd3ff'},
+ {id:'planet',name:'Sugar planet',desc:'A whole world of sweets',cost:1.4e6,rate:1400,col:'#b48cff'}];
+const SKILLS=[
+ {id:'finger',name:'Sugar fingers',desc:'+2 candy per tap',max:10},
+ {id:'crit',name:'Sweet tooth',desc:'+5% chance of a 10x tap',max:10},
+ {id:'rush',name:'Auto tapper',desc:'+1 free tap every second',max:10},
+ {id:'luck',name:'Lucky wrapper',desc:'+15% helper production',max:10}];
+const REWARDS=[
+ {min:5,name:'Candy bag',desc:'A big bag of candy'},
+ {min:10,name:'Golden wrapper',desc:'+1 skill point and a candy haul'},
+ {min:15,name:'Sugar rush',desc:'x2 everything for 2 minutes, plus a mega haul'}];
+const KEY='candyClickerSave1';
+const fresh=()=>({candy:0,total:0,clicks:0,level:1,xp:0,sp:0,skills:{finger:0,crit:0,rush:0,luck:0},owned:{},play:0,claimed:[false,false,false],round:1,boostLeft:0});
+let s=fresh();
+try{const raw=localStorage.getItem(KEY);if(raw)s=Object.assign(fresh(),JSON.parse(raw));}catch(e){}
+const $=id=>document.getElementById(id);
+/* ---------- audio (all synthesised, starts on first tap) ---------- */
+const AU={ctx:null,sfx:true,music:true};
+try{const p=JSON.parse(localStorage.getItem('candyClickerAudio')||'{}');if(p.sfx===false)AU.sfx=false;if(p.music===false)AU.music=false}catch(e){}
+const mf=m=>440*Math.pow(2,(m-69)/12);
+function tone(f,d,type,v,t0,f2,bus){const c=AU.ctx;if(!c)return;const t=t0||c.currentTime;const o=c.createOscillator(),g=c.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(v,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.connect(g);g.connect(bus||AU.sg);o.start(t);o.stop(t+d+0.03)}
+function arp(notes,gap,type,vol,dur){if(!AU.sfx||!AU.ctx)return;const t=AU.ctx.currentTime;notes.forEach((m,i)=>tone(mf(m),dur,type,vol,t+i*gap))}
+const SFX={
+  tap(crit){if(!AU.sfx||!AU.ctx)return;const p=1+Math.random()*0.15;tone(520*p,0.09,'sine',0.35,0,980*p);if(crit){const t=AU.ctx.currentTime;[84,88,91,96].forEach((m,i)=>tone(mf(m),0.14,'triangle',0.22,t+0.04+i*0.05))}},
+  auto(){if(AU.sfx&&AU.ctx)tone(1000,0.04,'sine',0.05)},
+  buy(){arp([72,79],0.07,'square',0.1,0.12)},
+  skill(){arp([67,71,74,79],0.06,'triangle',0.22,0.16)},
+  level(){arp([72,76,79,84,88],0.08,'triangle',0.25,0.2);if(AU.sfx&&AU.ctx)tone(mf(84),0.6,'sine',0.2,AU.ctx.currentTime+0.42)},
+  ready(){arp([88,84,88],0.09,'sine',0.25,0.18)},
+  claim(){if(!AU.sfx||!AU.ctx)return;const t=AU.ctx.currentTime;[72,72,76,79,84].forEach((m,i)=>tone(mf(m),i===4?0.5:0.13,'square',0.12,t+i*0.1));tone(mf(48),0.9,'triangle',0.3,t+0.4)}
+};
+const MEL=[76,0,79,76,72,0,74,76, 77,0,76,74,72,0,69,0, 76,0,79,81,79,0,76,74, 72,74,76,0,74,0,72,0];
+const ROOT=[48,45,41,43],CH=[[60,64,67],[57,60,64],[53,57,60],[55,59,62]];
+let mStep=0,mNext=0;
+function beat(i,t,spb){const bar=i>>3,m=MEL[i];
+  if(m)tone(mf(m),spb*0.9,'square',0.07,t,0,AU.mg);
+  if(i%2===0)tone(mf(i%4===0?ROOT[bar]:ROOT[bar]+7),spb*1.8,'triangle',0.28,t,0,AU.mg);
+  if(i%4===2)CH[bar].forEach(c=>tone(mf(c),spb*0.8,'sine',0.05,t,0,AU.mg))}
+function startMusic(){mNext=AU.ctx.currentTime+0.1;setInterval(()=>{const c=AU.ctx;if(!c||c.state!=='running'||!AU.music)return;
+  const spb=60/(s.boostLeft>0?140:112)/2;if(mNext<c.currentTime-0.2)mNext=c.currentTime+0.05;
+  while(mNext<c.currentTime+0.15){beat(mStep,mNext,spb);mNext+=spb;mStep=(mStep+1)%32}},25)}
+function initAudio(){
+  if(AU.ctx){if(AU.ctx.state==='suspended'&&document.visibilityState==='visible')AU.ctx.resume();return}
+  try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;AU.ctx=new C();
+    AU.master=AU.ctx.createGain();AU.master.gain.value=0.6;AU.master.connect(AU.ctx.destination);
+    AU.sg=AU.ctx.createGain();AU.sg.connect(AU.master);AU.mg=AU.ctx.createGain();AU.mg.gain.value=0.22;AU.mg.connect(AU.master);startMusic()}catch(e){AU.ctx=null}}
+document.addEventListener('click',initAudio,true);document.addEventListener('keydown',initAudio,true);
+document.addEventListener('visibilitychange',()=>{if(!AU.ctx)return;if(document.visibilityState==='hidden')AU.ctx.suspend();else AU.ctx.resume()});
+function saveAudio(){try{localStorage.setItem('candyClickerAudio',JSON.stringify({sfx:AU.sfx,music:AU.music}))}catch(e){}}
+function paintToggles(){const m=$('musicBtn'),f=$('sfxBtn');m.textContent=AU.music?'Music on':'Music off';m.setAttribute('aria-pressed',AU.music);f.textContent=AU.sfx?'Sounds on':'Sounds off';f.setAttribute('aria-pressed',AU.sfx)}
+$('musicBtn').addEventListener('click',()=>{AU.music=!AU.music;if(AU.ctx&&AU.music)mNext=AU.ctx.currentTime+0.05;paintToggles();saveAudio()});
+$('sfxBtn').addEventListener('click',()=>{AU.sfx=!AU.sfx;paintToggles();saveAudio();SFX.buy()});
+paintToggles();
+const fmt=n=>{n=Math.floor(n);if(n<1000)return String(n);const u=['K','M','B','T','Qa','Qi'];let i=-1;while(n>=1000&&i<u.length-1){n/=1000;i++}return n.toFixed(n<10?2:n<100?1:0)+u[i]};
+const time=t=>{t=Math.max(0,Math.ceil(t));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
+const xpNeed=l=>Math.floor(20*Math.pow(1.45,l-1));
+const boost=()=>s.boostLeft>0?2:1;
+const perClick=()=>(1+s.skills.finger*2)*(1+(s.level-1)*0.1)*boost();
+const perSec=()=>SHOP.reduce((a,b)=>a+(s.owned[b.id]||0)*b.rate,0)*(1+s.skills.luck*0.15)*boost();
+const cost=b=>Math.ceil(b.cost*Math.pow(1.15,s.owned[b.id]||0));
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}};
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;$('toasts').appendChild(t);setTimeout(()=>t.remove(),2600)}
+function gain(n){s.candy+=n;s.total+=n}
+
+function addXp(n){
+  s.xp+=n;
+  while(s.xp>=xpNeed(s.level)){
+    s.xp-=xpNeed(s.level);s.level++;s.sp++;
+    let msg='Level '+s.level+'! +1 skill point';
+    if(s.level%5===0){const bonus=Math.max(100,perSec()*60);gain(bonus);msg+=' and '+fmt(bonus)+' bonus candy'}
+    toast(msg);SFX.level();renderSkills();
+  }
+}
+const stage=document.querySelector('.stage');
+function floatText(txt,x,y,crit){const f=document.createElement('div');f.className='float'+(crit?' crit':'');f.textContent=txt;f.style.left=x+'px';f.style.top=y+'px';stage.appendChild(f);setTimeout(()=>f.remove(),900)}
+function tap(auto,ev){
+  const crit=Math.random()<s.skills.crit*0.05;
+  const n=perClick()*(crit?10:1);gain(n);
+  if(!auto){s.clicks++;addXp(1);SFX.tap(crit)}else SFX.auto();
+  const r=stage.getBoundingClientRect(),b=$('candyBtn').getBoundingClientRect();
+  let x,y;
+  if(ev&&ev.clientX){x=ev.clientX-r.left;y=ev.clientY-r.top}else{x=b.left-r.left+b.width*(0.3+Math.random()*0.4);y=b.top-r.top+b.height*0.3}
+  floatText('+'+fmt(n)+(crit?' CRIT!':''),x-20+Math.random()*20,y-20,crit);
+}
+$('candyBtn').addEventListener('click',e=>{tap(false,e);const c=$('candyBtn');c.classList.add('pop');setTimeout(()=>c.classList.remove('pop'),80);render()});
+
+const icon=col=>`<svg class="ico" viewBox="0 0 44 44" aria-hidden="true"><path d="M12 22 3 14v16z M32 22l9-8v16z" fill="${col}" opacity=".6"/><circle cx="22" cy="22" r="12" fill="${col}"/><circle cx="18" cy="18" r="3.5" fill="#fff" opacity=".7"/></svg>`;
+const giftIco=i=>`<svg class="ico" viewBox="0 0 44 44" aria-hidden="true"><rect x="7" y="16" width="30" height="22" rx="4" fill="${['#ff4f8b','#ffd23f','#2fc79c'][i]}"/><rect x="5" y="11" width="34" height="8" rx="3" fill="${['#e2306f','#f0a500','#16906d'][i]}"/><rect x="19" y="11" width="6" height="27" fill="#fff" opacity=".8"/><path d="M22 11c-6-9-14-4-8 0zM22 11c6-9 14-4 8 0z" fill="#fff" opacity=".85"/></svg>`;
+
+function renderShop(){
+  $('shop').innerHTML=SHOP.map(b=>`<div class="row">${icon(b.col)}<div><div class="name">${b.name}</div><div class="desc">${b.desc} · ${b.rate<1?b.rate:fmt(b.rate)}/s each</div><div class="owned">Owned: ${s.owned[b.id]||0}</div></div><button class="btn" data-buy="${b.id}">${fmt(cost(b))}</button></div>`).join('');
+}
+function renderSkills(){
+  $('skills').innerHTML=SKILLS.map(k=>{const lv=s.skills[k.id];return `<div class="row">${icon(k.id==='crit'?'#ffd23f':k.id==='rush'?'#2fc79c':k.id==='luck'?'#b48cff':'#ff4f8b')}<div><div class="name">${k.name} <span class="owned">${lv}/${k.max}</span></div><div class="desc">${k.desc}</div><div class="pips">${Array.from({length:k.max},(_,i)=>`<i class="${i<lv?'on':''}"></i>`).join('')}</div></div><button class="btn gold" data-skill="${k.id}" ${s.sp<1||lv>=k.max?'disabled':''}>${lv>=k.max?'Maxed':'Learn'}</button></div>`}).join('');
+}
+function renderRewards(){
+  $('rewards').innerHTML=REWARDS.map((r,i)=>{const need=r.min*60,left=need-s.play,ready=left<=0;const done=s.claimed[i];
+    return `<div class="row">${giftIco(i)}<div><div class="name">${r.min} minute ${r.name.toLowerCase()}</div><div class="desc">${r.desc}</div><div class="tbar"><i style="width:${Math.min(100,s.play/need*100)}%"></i></div></div><button class="btn gold" data-claim="${i}" ${!ready||done?'disabled':''}>${done?'Claimed':ready?'Claim!':time(left)}</button></div>`}).join('');
+}
+document.querySelector('.side').addEventListener('click',e=>{
+  const t=e.target.closest('button');if(!t)return;
+  if(t.dataset.buy){const b=SHOP.find(x=>x.id===t.dataset.buy),c=cost(b);if(s.candy>=c){s.candy-=c;s.owned[b.id]=(s.owned[b.id]||0)+1;SFX.buy();renderShop();render()}}
+  if(t.dataset.skill){const k=SKILLS.find(x=>x.id===t.dataset.skill);if(s.sp>0&&s.skills[k.id]<k.max){s.sp--;s.skills[k.id]++;SFX.skill();toast(k.name+' is now level '+s.skills[k.id]);renderSkills();renderShop();render()}}
+  if(t.dataset.claim){const i=+t.dataset.claim;if(s.claimed[i]||s.play<REWARDS[i].min*60)return;
+    let amt;
+    if(i===0){amt=Math.max(250,perSec()*120+perClick()*50);gain(amt);toast('Candy bag: +'+fmt(amt)+' candy')}
+    if(i===1){amt=Math.max(1000,perSec()*300);gain(amt);s.sp++;toast('Golden wrapper: +1 skill point and +'+fmt(amt)+' candy');renderSkills()}
+    if(i===2){amt=Math.max(5000,perSec()*600);gain(amt);s.boostLeft=120;toast('Sugar rush! x2 for 2 minutes and +'+fmt(amt)+' candy')}
+    s.claimed[i]=true;SFX.claim();
+    if(s.claimed.every(Boolean)){s.claimed=[false,false,false];s.play=0;s.round++;setTimeout(()=>toast('New reward round started'),400)}
+    renderRewards();render();save()}
+});
+let lastReady='';
+function render(){
+  $('candy').textContent=fmt(s.candy);$('cps').textContent=fmt(perSec()+s.skills.rush*perClick());$('cpc').textContent=fmt(perClick());
+  $('lvl').textContent=s.level;$('xp').textContent=s.xp;$('xpNeed').textContent=xpNeed(s.level);$('xpBar').style.width=(s.xp/xpNeed(s.level)*100)+'%';
+  $('clicksChip').textContent=fmt(s.clicks)+' taps';$('spChip').textContent=s.sp+' skill point'+(s.sp===1?'':'s');
+  const bc=$('boostChip');bc.hidden=s.boostLeft<=0;bc.textContent='Sugar rush x2 · '+time(s.boostLeft);$('candyBtn').classList.toggle('boost',s.boostLeft>0);
+  $('round').textContent=s.round;$('playT').textContent=time(s.play);
+  document.querySelectorAll('[data-buy]').forEach(b=>{b.disabled=s.candy<cost(SHOP.find(x=>x.id===b.dataset.buy))});
+}
+let last=performance.now(),rushAcc=0,saveAcc=0,rwAcc=0;
+setInterval(()=>{
+  const now=performance.now(),dt=Math.min(1,(now-last)/1000);last=now;
+  gain(perSec()*dt);
+  if(document.visibilityState==='visible'){const before=s.play;s.play=Math.min(s.play+dt,15*60);
+    REWARDS.forEach((r,i)=>{if(before<r.min*60&&s.play>=r.min*60&&!s.claimed[i]){toast(r.min+' minute reward ready to claim!');SFX.ready()}})}
+  if(s.boostLeft>0)s.boostLeft=Math.max(0,s.boostLeft-dt);
+  rushAcc+=dt*s.skills.rush;while(rushAcc>=1){rushAcc--;tap(true)}
+  rwAcc+=dt;if(rwAcc>=1){rwAcc=0;renderRewards()}
+  saveAcc+=dt;if(saveAcc>=5){saveAcc=0;save()}
+  render();
+},100);
+$('resetBtn').addEventListener('click',()=>$('modal').classList.add('open'));
+$('noReset').addEventListener('click',()=>$('modal').classList.remove('open'));
+$('yesReset').addEventListener('click',()=>{s=fresh();save();$('modal').classList.remove('open');renderShop();renderSkills();renderRewards();render();toast('Fresh start!')});
+window.addEventListener('pagehide',save);
+renderShop();renderSkills();renderRewards();render();
+}
+</script>
+</body>
+</html>
